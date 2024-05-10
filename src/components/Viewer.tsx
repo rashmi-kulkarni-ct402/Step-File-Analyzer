@@ -18,15 +18,89 @@ declare global {
 
 const Viewer: React.FC = () => {
   var Autodesk = window.Autodesk;
-  console.log("Autodesk: ", Autodesk);
   const [token, setToken] = useState<ForgeViewerToken>();
   const [urn, setUrn] = useState<string>();
   const [forgeViewer, setForgeViewer] =
     useState<Autodesk.Viewing.GuiViewer3D | null>(null);
-
-  console.log("urn: ", urn);
-
+  const [selectedDbId, setSelectedDbId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleSelectionChanged = (event: any) => {
+      const dbIds = forgeViewer?.getSelection();
+      if (dbIds && dbIds.length > 0) {
+        const dbId = dbIds[0];
+        setSelectedDbId(dbId);
+        console.log("Selected dbId:", dbId);
+      }
+    };
+
+    if (forgeViewer) {
+      forgeViewer.addEventListener(
+        Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+        handleSelectionChanged
+      );
+      return () => {
+        forgeViewer.removeEventListener(
+          Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+          handleSelectionChanged
+        );
+      };
+    }
+  }, [forgeViewer]);
+
+  useEffect(() => {
+    if (forgeViewer) {
+      const startCode = forgeViewer.start();
+      if (startCode === 0) {
+        Autodesk.Viewing.Document.load(
+          `urn:${urn}`,
+          onDocumentLoadSuccess,
+          onDocumentLoadFailure
+        );
+      } else {
+        console.error("Failed to start the viewer.");
+      }
+    }
+  }, [forgeViewer, urn]);
+
+  useEffect(() => {
+    async function initializeViewer() {
+      if (!urn || !token) {
+        console.log("URN or token not available.");
+        return;
+      }
+
+      console.log("Initializing viewer...");
+      const options = {
+        env: "AutodeskProduction2",
+        api: "streamingV2",
+        getAccessToken: (
+          onTokenReady: (token: string, expires: number) => void
+        ) => {
+          onTokenReady(token.access_token, token.expires_in);
+        },
+      };
+
+      Autodesk.Viewing.Initializer(options, function () {
+        const viewerDiv = document.getElementById("forgeViewer");
+        if (viewerDiv) {
+          setForgeViewer(new Autodesk.Viewing.GuiViewer3D(viewerDiv));
+        } else {
+          console.error("Viewer element not found.");
+        }
+      });
+    }
+
+    initializeViewer();
+  }, [urn, token]);
+
+  useEffect(() => {
+    getAccessToken().then((token: ForgeViewerToken) => {
+      setToken(token);
+      createBucket(token.access_token, STEP_FILES_BUCKET_KEY);
+    });
+  }, []);
 
   const handleFileChange = async (event: any) => {
     const file = event.target.files[0];
@@ -89,59 +163,22 @@ const Viewer: React.FC = () => {
     console.error("Failed fetching Forge manifest");
   }
 
-  useEffect(() => {
-    if (forgeViewer) {
-      const startCode = forgeViewer.start();
-      if (startCode === 0) {
-        Autodesk.Viewing.Document.load(
-          `urn:${urn}`,
-          onDocumentLoadSuccess,
-          onDocumentLoadFailure
-        );
-      } else {
-        console.error("Failed to start the viewer.");
-      }
-    }
-  }, [forgeViewer]);
-
-  useEffect(() => {
-    async function initializeViewer() {
-      if (!urn || !token) {
-        console.log("URN or token not available.");
-        return;
-      }
-
-      console.log("Initializing viewer...");
-      const options = {
-        env: "AutodeskProduction2",
-        api: "streamingV2",
-        getAccessToken: (
-          onTokenReady: (token: string, expires: number) => void
-        ) => {
-          onTokenReady(token.access_token, token.expires_in);
-        },
-      };
-
-      Autodesk.Viewing.Initializer(options, function () {
-        const viewerDiv = document.getElementById("forgeViewer");
-        if (viewerDiv) {
-          setForgeViewer(new Autodesk.Viewing.GuiViewer3D(viewerDiv));
-        } else {
-          console.error("Viewer element not found.");
-        }
-      });
+  const fetchObjectProperties = (dbId: number): void => {
+    if (!forgeViewer) {
+      console.error("Forge Viewer is not initialized.");
+      return;
     }
 
-    initializeViewer();
-  }, [urn, token]);
-
-  console.log("token: ", token);
-  useEffect(() => {
-    getAccessToken().then((token: ForgeViewerToken) => {
-      setToken(token);
-      createBucket(token.access_token, STEP_FILES_BUCKET_KEY);
-    });
-  }, []);
+    forgeViewer.getProperties(
+      dbId,
+      (props: any) => {
+        console.log("Properties of dbId", dbId, ":", props);
+      },
+      (error: any) => {
+        console.error("Failed to get properties for dbId", dbId, ":", error);
+      }
+    );
+  };
 
   return (
     <Grid container style={{ height: "100vh" }}>
@@ -154,9 +191,11 @@ const Viewer: React.FC = () => {
       <Grid item xs={0.1}>
         <div style={{ background: "white" }}></div>
       </Grid>
-      <Grid item xs={4} style={{ height: "100%", background: "lightgray" }}>
-        {/* space for file properties */}
-      </Grid>
+      <Grid
+        item
+        xs={4}
+        style={{ height: "100%", background: "lightgray" }}
+      ></Grid>
       <AppBar
         position="sticky"
         color="primary"
@@ -177,7 +216,11 @@ const Viewer: React.FC = () => {
           >
             Load STEP File
           </Button>
-          <Button variant="contained" color="success">
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => selectedDbId && fetchObjectProperties(selectedDbId)}
+          >
             Save File Properties
           </Button>
         </Toolbar>
