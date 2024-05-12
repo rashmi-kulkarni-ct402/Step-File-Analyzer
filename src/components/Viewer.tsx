@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Grid, AppBar, Toolbar, Button } from "@mui/material";
+import { Grid, AppBar, Toolbar, Button, TextField } from "@mui/material";
 import { ForgeViewerToken } from "../model/types/forgeViewer.types";
 import { STEP_FILES_BUCKET_KEY } from "../model/constants";
 import { getAccessToken } from "../api/accessTokenAPI";
@@ -9,6 +9,7 @@ import { checkFileUploaded } from "../api/fileManagementAPI";
 import { translateFile } from "../api/translationManagementAPI";
 import { createUrn } from "../utils/urnUtils";
 import { checkJobStatus } from "../api/jobStatusAPI";
+import { savePropertiesToExcel } from "../utils/excelUtils";
 
 declare global {
   interface Window {
@@ -171,10 +172,12 @@ const Viewer: React.FC = () => {
 
     forgeViewer.getProperties(
       dbId,
-      (props: any) => {
+      (props) => {
         console.log("Properties of dbId", dbId, ":", props);
+        // Assuming props.data is the array of properties you want to save
+        savePropertiesToExcel(props.properties);
       },
-      (error: any) => {
+      (error) => {
         console.error("Failed to get properties for dbId", dbId, ":", error);
       }
     );
