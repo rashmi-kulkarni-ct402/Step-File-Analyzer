@@ -9,6 +9,8 @@ import { checkFileUploaded } from "../api/fileManagementAPI";
 import { translateFile } from "../api/translationManagementAPI";
 import { createUrn } from "../utils/urnUtils";
 import { checkJobStatus } from "../api/jobStatusAPI";
+import { getMetadata } from "../api/accessMetadataAPI";
+import { getProperties } from "../api/accessPropertiesAPI";
 import { savePropertiesToExcel } from "../utils/excelUtils";
 
 declare global {
@@ -158,29 +160,39 @@ const Viewer: React.FC = () => {
     }
 
     console.log("Document loaded fine!", viewerDocument);
+    console.log("urn: ", urn);
+    console.log("token: ", token);
   };
 
   function onDocumentLoadFailure() {
     console.error("Failed fetching Forge manifest");
   }
 
-  const fetchObjectProperties = (dbId: number): void => {
-    if (!forgeViewer) {
-      console.error("Forge Viewer is not initialized.");
+  const fetchObjectProperties = async (dbId: number) => {
+    if (!token || !urn) {
+      console.log("Token or URN not available.");
       return;
     }
 
-    forgeViewer.getProperties(
-      dbId,
-      (props) => {
-        console.log("Properties of dbId", dbId, ":", props);
-        // Assuming props.data is the array of properties you want to save
-        savePropertiesToExcel(props.properties);
-      },
-      (error) => {
-        console.error("Failed to get properties for dbId", dbId, ":", error);
+    try {
+      const metadata = await getMetadata(token.access_token, urn);
+      if (!metadata || !metadata.data || !metadata.data.metadata) {
+        console.error("Metadata not available.");
+        return;
       }
-    );
+
+      const guid = metadata.data.metadata[0].guid;
+      const properties = await getProperties(token.access_token, urn, guid);
+      if (!properties || !properties.data) {
+        console.error("Properties not available.");
+        return;
+      }
+      console.log("guid: ", guid);
+      console.log("Object properties:", properties.data);
+      // savePropertiesToExcel(properties.data);
+    } catch (error) {
+      console.error("Error fetching or saving object properties:", error);
+    }
   };
 
   return (
