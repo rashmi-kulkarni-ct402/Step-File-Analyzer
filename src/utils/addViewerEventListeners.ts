@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 const addViewerEventListeners = (
   forgeViewer: Autodesk.Viewing.GuiViewer3D | null
 ): (() => void) | undefined => {
