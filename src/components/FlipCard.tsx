@@ -23,18 +23,14 @@ const FlipCard: React.FC<FlipCardProps> = ({ question, answer }) => {
       <CardActionArea
         sx={{
           position: "relative",
-          width: "100%",
+          width: "120%",
           height: "100%",
         }}
       >
         <CardContent
           sx={{
-            position: "absolute",
-            width: "100%",
-            height: "0%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            position: "sticky",
+            width: "75%",
           }}
         >
           <Typography
