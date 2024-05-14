@@ -1,15 +1,21 @@
-import React from 'react';
-import Header from './components/Header';
-import Viewer from './components/Viewer';
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Header from "./components/Header";
+import HomePage from "./components/HomePage";
+import Viewer from "./components/Viewer";
 
 const App: React.FC = () => {
   return (
-    <div>
-      <Header></Header>
-      <Viewer></Viewer>
-    </div>
+    <Router>
+      <div>
+        <Header />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/viewer" element={<Viewer />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
 export default App;
-

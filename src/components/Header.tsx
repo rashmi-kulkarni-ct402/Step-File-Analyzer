@@ -3,7 +3,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 
 const Header = () => {
   return (
-    <AppBar position="sticky">
+    <AppBar position="sticky" style={{ backgroundColor: "darkblue" }}>
       <Toolbar>
         <Typography
           variant="h4"

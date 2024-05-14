@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Grid, AppBar, Toolbar, Button, TextField } from "@mui/material";
+import { Grid, AppBar, Toolbar, Button } from "@mui/material";
 import { ForgeViewerToken } from "../model/types/forgeViewer.types";
 import { STEP_FILES_BUCKET_KEY } from "../model/constants";
 import { getAccessToken } from "../api/accessTokenAPI";
@@ -189,7 +189,7 @@ const Viewer: React.FC = () => {
       }
       console.log("guid: ", guid);
       console.log("Object properties:", properties.data);
-      // savePropertiesToExcel(properties.data);
+      savePropertiesToExcel(properties.data);
     } catch (error) {
       console.error("Error fetching or saving object properties:", error);
     }
@@ -213,8 +213,8 @@ const Viewer: React.FC = () => {
       ></Grid>
       <AppBar
         position="sticky"
-        color="primary"
         sx={{ top: "auto", bottom: 0, width: "100%" }}
+        style={{ backgroundColor: "darkblue" }}
       >
         <Toolbar sx={{ justifyContent: "center" }}>
           <input
