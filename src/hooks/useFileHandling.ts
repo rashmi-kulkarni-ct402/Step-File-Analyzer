@@ -1,12 +1,14 @@
+// Custom hook to handle file selection, uploading, translation, and URN generation.
+
 import { useRef, useState } from "react";
 import {
   checkFileUploaded,
   uploadFileToBucket,
 } from "../api/fileManagementAPI";
-import { createUrn } from "../utils/urnUtils";
+import { createUrn } from "../utils/urn.utils";
 import { translateFile } from "../api/translationManagementAPI";
 import { checkJobStatus } from "../api/jobStatusAPI";
-import { STEP_FILES_BUCKET_KEY } from "../model/constants";
+import { STEP_FILES_BUCKET_KEY } from "../model/constants/index.constants";
 
 export type FileHandlingResponse = {
   urn: string | undefined;
@@ -19,6 +21,7 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
   const [urn, setUrn] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handles file selection via input element
   const handleFileChange = (event: any) => {
     const file = event.target.files[0];
 
@@ -27,14 +30,17 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
       return;
     }
 
+    // Check if file has already been uploaded
     if (token) {
       checkFileUploaded(STEP_FILES_BUCKET_KEY, file.name, token).then(
         async (fileCheckResp) => {
           console.log("fileCheckResp: ", fileCheckResp);
 
           if (fileCheckResp) {
+            // If file exists, create a URN
             setUrn(createUrn(STEP_FILES_BUCKET_KEY, file.name));
           } else {
+            // If file doesn't exist, upload it
             console.log("uploading file to bucket ... ");
             const uploadResp = await uploadFileToBucket(
               file,
@@ -44,11 +50,13 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
             console.log("uploadResp : ", uploadResp);
             const { objectId } = uploadResp;
 
+            // Translate the uploaded file
             console.log("Sending uploaded file for translation ... ");
             const translationResp = await translateFile(objectId, token);
             console.log("translationResp : ", translationResp);
             const { urn } = translationResp;
 
+            // Check the status of the translation job
             checkJobStatus(urn, token, (urn) => setUrn(urn));
           }
         }
@@ -56,6 +64,7 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
     }
   };
 
+  // Triggers the file input when the button is clicked
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };

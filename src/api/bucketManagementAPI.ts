@@ -1,3 +1,7 @@
+/*
+ * API Call to Check if a Specific Bucket Exists on Autodesk's Object Storage Service
+ * This function checks for the existence of a bucket identified by a bucket key.
+ */
 export async function checkBucketExists(
   accessToken: string,
   bucketKey: string
@@ -28,6 +32,10 @@ export async function checkBucketExists(
   }
 }
 
+/*
+ * API Call to Create a New Bucket on Autodesk's Object Storage Service
+ * This function creates a new bucket where objects can be stored. A bucket is created only if it does not already exist.
+ */
 export const createBucket = async (
   accessToken: string,
   bucketKey: string,

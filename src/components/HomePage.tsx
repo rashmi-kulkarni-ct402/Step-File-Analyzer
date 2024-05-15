@@ -1,3 +1,10 @@
+/*
+ * HomePage Component
+ * This component serves as the main landing page of the application. It displays introductory cards using FlipCard components that provide
+ * basic information about STEP files and their analysis.
+ * It uses a drag-and-drop area for uploading files, which upon receiving a file, navigates to a viewer page with the file's details.
+ */
+
 import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Grid, Paper, Typography, Box } from "@mui/material";

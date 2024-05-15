@@ -1,3 +1,5 @@
+// Custom hook to fetch and manage properties of a 3D model.
+
 import { useEffect, useState } from "react";
 import { getMetadata } from "../api/accessMetadataAPI";
 import { getProperties } from "../api/accessPropertiesAPI";
@@ -21,12 +23,15 @@ const useObjectProperties = (
     }
 
     try {
+      // Fetch metadata and then properties based on the metadata
       getMetadata(token, urn).then(async (metadata) => {
+        // Fetch properties using the GUID
         if (!metadata || !metadata.data || !metadata.data.metadata) {
           console.error("Metadata not available.");
           return;
         }
 
+        // Extract GUID from metadata
         const guid = metadata.data.metadata[0].guid;
         const getPropertiesResp = await getProperties(token, urn, guid);
         if (!getPropertiesResp) {
@@ -35,12 +40,13 @@ const useObjectProperties = (
         }
         console.log("guid: ", guid);
         console.log("Object getPropertiesResp:", getPropertiesResp);
+        // Set the fetched properties in state
         setProperties(getPropertiesResp);
       });
     } catch (error) {
       console.error("Error fetching or saving object properties:", error);
     }
-  }, [, token, urn]);
+  }, [token, urn]); // Dependencies
 
   return properties;
 };

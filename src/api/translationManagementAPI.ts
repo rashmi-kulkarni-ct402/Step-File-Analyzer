@@ -1,3 +1,7 @@
+/*
+ * API Call to Start a Translation Job on Autodesk's Model Derivative API
+ * This function initiates a translation job to convert a model into a format that can be viewed on Autodesk platforms.
+ */
 export async function translateFile(
   objectId: string,
   accessToken: string
