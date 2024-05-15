@@ -16,6 +16,25 @@ const useForgeViewer = (
 ): Autodesk.Viewing.GuiViewer3D | null => {
   let [forgeViewer, setForgeViewer] =
     useState<Autodesk.Viewing.GuiViewer3D | null>(null);
+  let [removeViewerEventListners, setRemoveViewerEventListners] = useState<
+    (() => void) | undefined
+  >();
+
+  useEffect(
+    () => () => {
+      if (removeViewerEventListners) {
+        removeViewerEventListners();
+      }
+
+      if (forgeViewer) {
+        // Properly shut down the viewer to clean up resources.
+        forgeViewer.finish();
+        Autodesk.Viewing.shutdown();
+        setForgeViewer(null);
+      }
+    },
+    [] // run useEffect on mount & cleanup on unmount
+  );
 
   useEffect(() => {
     // Only proceed if the viewer is already initialized
@@ -34,20 +53,7 @@ const useForgeViewer = (
       }
 
       // Setup and return a cleanup function
-      const removeViewerEventListners = addViewerEventListeners(forgeViewer);
-
-      // This is a clean up function that clears viewer and events on component unmount
-      return () => {
-        if (removeViewerEventListners) {
-          removeViewerEventListners();
-        }
-
-        if (forgeViewer) {
-          forgeViewer.finish();
-          forgeViewer = null;
-          Autodesk.Viewing.shutdown();
-        }
-      };
+      setRemoveViewerEventListners(addViewerEventListeners(forgeViewer));
     }
   }, [forgeViewer, urn]);
 
@@ -57,7 +63,6 @@ const useForgeViewer = (
       console.log("URN or token not available.");
       return;
     }
-
     console.log("Initializing viewer...");
 
     // Viewer initialization settings
@@ -82,10 +87,6 @@ const useForgeViewer = (
         console.error("Viewer element not found.");
       }
     });
-
-    return () => {
-      setForgeViewer(null);
-    };
   }, [urn, token]); // Dependencies
 
   // Callback for successful document load

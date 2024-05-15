@@ -23,8 +23,8 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
 
   // Handles file selection via input element
   const handleFileChange = (event: any) => {
-    const file = event.target.files[0];
-
+    // const file = event.target.files[0];
+    const file = event.target ? event.target.files[0] : event;
     if (!file) {
       console.error("No file selected.");
       return;

@@ -60,9 +60,15 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
       <Table aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: "10%" }}>Object ID</TableCell>
-            <TableCell sx={{ width: "20%" }}>Name</TableCell>
-            <TableCell sx={{ width: "70%" }}>Properties</TableCell>
+            <TableCell sx={{ width: "10%", fontWeight: "bold" }}>
+              Object ID
+            </TableCell>
+            <TableCell sx={{ width: "10%", fontWeight: "bold" }}>
+              Name
+            </TableCell>
+            <TableCell sx={{ width: "10%", fontWeight: "bold" }}>
+              Properties
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -74,7 +80,12 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({
               <TableCell sx={{ width: "20%", verticalAlign: "top" }}>
                 {item.name}
               </TableCell>
-              <TableCell sx={{ width: "70%", verticalAlign: "top" }}>
+              <TableCell
+                sx={{
+                  width: "70%",
+                  verticalAlign: "top",
+                }}
+              >
                 {renderProperties(item.properties)}
               </TableCell>
             </TableRow>
