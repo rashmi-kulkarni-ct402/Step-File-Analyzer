@@ -45,7 +45,7 @@ export async function checkFileUploaded(
   objectName: string,
   accessToken: string
 ): Promise<any> {
-  const url = `https://developer.api.autodesk.com/oss/v2/buckets/${bucketKey}/objects/${objectName}`;
+  const url = `https://developer.api.autodesk.com/oss/v2/buckets/${bucketKey}/objects/${objectName}/details`;
 
   const headers = {
     "Content-Type": "application/json",
@@ -66,7 +66,7 @@ export async function checkFileUploaded(
       throw new Error("Error checking file: " + response.statusText);
     }
 
-    return response;
+    return response.json();
   } catch (error) {
     console.error("Failed to check if file is uploaded:", error);
     return null;

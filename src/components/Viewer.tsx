@@ -1,119 +1,122 @@
 /*
  * Viewer Component
- * This component serves as the main interface for displaying and interacting with STEP file properties.
- * It integrates a 3D viewer setup, file handling mechanisms, and displays a properties table.
- * Users can load new STEP files to analyze, and save detailed properties to Excel.
+ * This component is responsible for initializing and displaying the Autodesk Forge Viewer.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Grid, AppBar, Toolbar, Button } from "@mui/material";
-import { savePropertiesToExcel } from "../utils/excel.utils";
-import useAccessToken from "../hooks/useAccessToken";
-import useFileHandling from "../hooks/useFileHandling";
-import useForgeViewer from "../hooks/useForgeViewer";
-import useObjectProperties from "../hooks/useObjectProperties";
-import { PropertiesTable } from "./PropertiesTable";
-import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import addViewerEventListeners from "../utils/addViewerEventListeners.utils";
 
-const Viewer: React.FC = () => {
-  const token = useAccessToken();
-  const accessTokenString = useMemo(() => token?.access_token ?? null, [token]);
-  const { urn, fileInputRef, handleButtonClick, handleFileChange } =
-    useFileHandling(accessTokenString);
-  useForgeViewer(urn, accessTokenString);
-  const properties = useObjectProperties(accessTokenString, urn);
-
-  //  *****************************************************
-  const location = useLocation();
-
-  // Check if the 'location' object and 'state' property exist
-  if (location && location.state) {
-    // Destructure the 'file' property from the 'state' object
-    const { file } = location.state;
-
-    if (file) {
-      handleFileChange(file);
-    }
-  }
-  //  *****************************************************
-
-  return (
-    <Grid container style={{ height: "80vh", width: "100%" }}>
-      <Grid
-        item
-        xs={6.9}
-        style={{
-          height: "80vh",
-          width: "50%",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div
-          id="forgeViewer"
-          style={{
-            background: "lightgrey",
-            height: "100%",
-            width: "100%",
-            position: "relative",
-          }}
-        />
-      </Grid>
-      <Grid item xs={0.1}>
-        <div style={{ background: "white" }}></div>
-      </Grid>
-      <Grid item xs={5} style={{ height: "80vh" }}>
-        <div
-          style={{
-            display: "flow",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            width: "100%",
-            overflowY: "scroll",
-            overflowX: "auto",
-            background: "aliceblue",
-          }}
-        >
-          <h2>File Properties</h2>
-          {properties && (
-            <PropertiesTable
-              propertiesCollection={properties.collection || []}
-            />
-          )}
-        </div>
-      </Grid>
-      <AppBar
-        position="sticky"
-        sx={{ top: "auto", bottom: 0, height: "10vh", width: "100%" }}
-        style={{ backgroundColor: "darkblue" }}
-      >
-        <Toolbar sx={{ justifyContent: "center" }}>
-          <input
-            type="file"
-            style={{ display: "none" }}
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <Button
-            variant="contained"
-            color="warning"
-            sx={{ mr: 2 }}
-            onClick={handleButtonClick}
-          >
-            Load STEP File
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => savePropertiesToExcel(properties?.collection || [])}
-          >
-            Save File Properties
-          </Button>
-        </Toolbar>
-      </AppBar>
-    </Grid>
-  );
+// Define the props type for the Viewer component
+type ViewerProps = {
+  urn: string | undefined;
+  token: string | null;
 };
 
-export default Viewer;
+export default function Viewer({ urn, token }: ViewerProps) {
+  // State to hold the Forge Viewer instance
+  const [forgeViewer, setForgeViewer] =
+    useState<Autodesk.Viewing.GuiViewer3D | null>(null);
+  // State to hold the cleanup function for viewer event listeners
+  const [removeViewerEventListners, setRemoveViewerEventListners] = useState<
+    (() => void) | undefined
+  >();
+
+  // Effect hook to clean up the viewer and event listeners on unmount
+  useEffect(
+    () => () => {
+      if (removeViewerEventListners) {
+        removeViewerEventListners();
+      }
+
+      if (forgeViewer) {
+        // Properly shut down the viewer to clean up resources.
+        forgeViewer.finish();
+        Autodesk.Viewing.shutdown();
+        setForgeViewer(null);
+      }
+    },
+    [] // run useEffect on mount & cleanup on unmount
+  );
+
+  useEffect(() => {
+    // Only proceed if the viewer is already initialized
+    if (forgeViewer) {
+      // Start the viewer instance
+      const startCode = forgeViewer.start();
+      if (startCode === 0) {
+        // Check if the viewer started successfully
+        window.Autodesk.Viewing.Document.load(
+          `urn:${urn}`,
+          onDocumentLoadSuccess, // Callback for successful document loading
+          onDocumentLoadFailure // Callback for failed document loading
+        );
+      } else {
+        console.error("Failed to start the viewer.");
+      }
+
+      // Setup and return a cleanup function
+      setRemoveViewerEventListners(addViewerEventListeners(forgeViewer));
+    }
+  }, [forgeViewer, urn]);
+
+  // Exit if the necessary credentials are not available
+  useEffect(() => {
+    if (!urn || !token) {
+      console.log("URN or token not available.");
+      return;
+    }
+    console.log("Initializing viewer...");
+
+    // Viewer initialization settings
+    const options = {
+      env: "AutodeskProduction2",
+      api: "streamingV2",
+      getAccessToken: (
+        onTokenReady: (token: string, expires: number) => void
+      ) => {
+        // Provide the token and expiry time to the viewer
+        onTokenReady(token, 3600);
+      },
+    };
+
+    // Initialize the viewer
+    window.Autodesk.Viewing.Initializer(options, function () {
+      const viewerDiv = document.getElementById("forgeViewer");
+      if (viewerDiv) {
+        // Set the viewer instance if the div is found
+        setForgeViewer(new window.Autodesk.Viewing.GuiViewer3D(viewerDiv));
+      } else {
+        console.error("Viewer element not found.");
+      }
+    });
+  }, [urn, token]); // Dependencies
+
+  // Callback for successful document load
+  const onDocumentLoadSuccess = (viewerDocument: Autodesk.Viewing.Document) => {
+    // Get the default model from the loaded document
+    var defaultModel = viewerDocument.getRoot().getDefaultGeometry();
+    if (forgeViewer) {
+      // Load the model into the viewer
+      forgeViewer.loadDocumentNode(viewerDocument, defaultModel);
+      // Make the toolbar visible
+      forgeViewer?.toolbar?.setVisible(true);
+    }
+  };
+
+  // Callback for failed document load
+  const onDocumentLoadFailure = () => {
+    console.error("Failed fetching Forge manifest");
+  };
+
+  return (
+    <div
+      id="forgeViewer"
+      style={{
+        background: "lightgrey",
+        height: "100%",
+        width: "100%",
+        position: "relative",
+      }}
+    />
+  );
+}
