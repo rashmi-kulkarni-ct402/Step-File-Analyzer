@@ -1,3 +1,7 @@
+/*
+ * API Call to Check the Status of a Translation Job on Autodesk's Model Derivative API
+ * This function checks the status of a translation job for a model, identified by the URN.
+ */
 export async function checkJobStatus(
   urn: string,
   accessToken: string,

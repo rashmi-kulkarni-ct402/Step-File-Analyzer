@@ -1,3 +1,9 @@
+/*
+ * Header Component
+ * This component renders a sticky AppBar at the top of the page. It includes a logo represented by an icon
+ * and a title indicating the purpose of the application or website.
+ */
+
 import { AppBar, Toolbar, IconButton, Typography } from "@mui/material";
 import DescriptionIcon from "@mui/icons-material/Description";
 

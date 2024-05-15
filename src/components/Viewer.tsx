@@ -1,24 +1,20 @@
-import React, { useState, useMemo } from "react";
+/*
+ * Viewer Component
+ * This component serves as the main interface for displaying and interacting with STEP file properties.
+ * It integrates a 3D viewer setup, file handling mechanisms, and displays a properties table.
+ * Users can load new STEP files to analyze, and save detailed properties to Excel.
+ */
+
+import React, { useMemo } from "react";
 import { Grid, AppBar, Toolbar, Button } from "@mui/material";
-import { savePropertiesToExcel } from "../utils/excelUtils";
+import { savePropertiesToExcel } from "../utils/excel.utils";
 import useAccessToken from "../hooks/useAccessToken";
 import useFileHandling from "../hooks/useFileHandling";
 import useForgeViewer from "../hooks/useForgeViewer";
 import useObjectProperties from "../hooks/useObjectProperties";
-
-declare global {
-  interface Window {
-    Autodesk: any;
-  }
-}
+import { PropertiesTable } from "./PropertiesTable";
 
 const Viewer: React.FC = () => {
-  var Autodesk = window.Autodesk;
-  const [forgeViewer, setForgeViewer] =
-    useState<Autodesk.Viewing.GuiViewer3D | null>(null);
-  const [selectedDbId, setSelectedDbId] = useState<number | null>(null);
-
-  // hooks call
   const token = useAccessToken();
   const accessTokenString = useMemo(() => token?.access_token ?? null, [token]);
   const { urn, fileInputRef, handleButtonClick, handleFileChange } =
@@ -27,12 +23,12 @@ const Viewer: React.FC = () => {
   const properties = useObjectProperties(accessTokenString, urn);
 
   return (
-    <Grid container style={{ height: "100vh", width: "100%" }}>
+    <Grid container style={{ height: "80vh", width: "100%" }}>
       <Grid
         item
-        xs={7.9}
+        xs={6.9}
         style={{
-          height: "100%",
+          height: "80vh",
           width: "50%",
           display: "flex",
           flexDirection: "column",
@@ -42,7 +38,7 @@ const Viewer: React.FC = () => {
           id="forgeViewer"
           style={{
             background: "lightgrey",
-            height: "100vh",
+            height: "100%",
             width: "100%",
             position: "relative",
           }}
@@ -51,28 +47,30 @@ const Viewer: React.FC = () => {
       <Grid item xs={0.1}>
         <div style={{ background: "white" }}></div>
       </Grid>
-      <Grid
-        item
-        xs={4}
-        style={{
-          background: "aliceblue",
-          height: "100%",
-        }}
-      >
+      <Grid item xs={5} style={{ height: "80vh" }}>
         <div
           style={{
-            display: "flex",
+            display: "flow",
             alignItems: "center",
             justifyContent: "center",
-            height: "100px",
+            height: "100%",
+            width: "100%",
+            overflowY: "scroll",
+            overflowX: "auto",
+            background: "aliceblue",
           }}
         >
           <h2>File Properties</h2>
+          {properties && (
+            <PropertiesTable
+              propertiesCollection={properties.collection || []}
+            />
+          )}
         </div>
       </Grid>
       <AppBar
         position="sticky"
-        sx={{ top: "auto", bottom: 0, width: "100%" }}
+        sx={{ top: "auto", bottom: 0, height: "10vh", width: "100%" }}
         style={{ backgroundColor: "darkblue" }}
       >
         <Toolbar sx={{ justifyContent: "center" }}>
@@ -93,7 +91,7 @@ const Viewer: React.FC = () => {
           <Button
             variant="contained"
             color="success"
-            onClick={() => savePropertiesToExcel(properties)}
+            onClick={() => savePropertiesToExcel(properties?.collection || [])}
           >
             Save File Properties
           </Button>

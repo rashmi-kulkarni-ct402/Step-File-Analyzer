@@ -1,3 +1,8 @@
+/*
+ * FlipCard Component
+ * This component represents a flip card that toggles between a question and an answer upon click.
+ */
+
 import React, { useState } from "react";
 import { Card, CardActionArea, CardContent, Typography } from "@mui/material";
 

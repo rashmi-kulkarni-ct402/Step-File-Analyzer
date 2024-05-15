@@ -1,3 +1,7 @@
+/*
+ * API Call to Upload a File to a Bucket on Autodesk's Object Storage Service
+ * This function uploads a file to a specified bucket. The file is identified by a bucket key and file name.
+ */
 export async function uploadFileToBucket(
   file: File,
   accessToken: string,
@@ -32,6 +36,10 @@ export async function uploadFileToBucket(
   }
 }
 
+/*
+ * API Call to Check if a File is Successfully Uploaded to a Bucket on Autodesk's Object Storage Service
+ * This function checks the status of a file in a bucket, identified by the bucket key and object name.
+ */
 export async function checkFileUploaded(
   bucketKey: string,
   objectName: string,

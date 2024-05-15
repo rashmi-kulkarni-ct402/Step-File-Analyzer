@@ -1,3 +1,8 @@
+/*
+ * API Call to Fetch Properties from Autodesk's Model Derivative API
+ * This function retrieves the detailed properties of a specific model identified by the URN and model GUID.
+ */
+
 import {
   ModelPropertiesResponse,
   PropertiesData,

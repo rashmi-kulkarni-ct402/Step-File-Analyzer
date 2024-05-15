@@ -1,5 +1,9 @@
+/*
+ * API Call to Fetch Access Token from Autodesk Authentication API
+ * This function retrieves an access token required for making authenticated requests to the Autodesk API.
+ */
 import { ForgeViewerToken } from "../model/types/forgeViewer.types";
-import { forgeConfig } from "../utils/forgeConfigUtils";
+import { forgeConfig } from "../utils/forgeConfig.utils";
 
 export async function getAccessToken(): Promise<ForgeViewerToken> {
   const url = "https://developer.api.autodesk.com/authentication/v2/token";
