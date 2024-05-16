@@ -1,6 +1,6 @@
 // Custom hook to handle file selection, uploading, translation, and URN generation.
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   checkFileUploaded,
   uploadFileToBucket,
@@ -9,6 +9,7 @@ import { createUrn } from "../utils/urn.utils";
 import { translateFile } from "../api/translationManagementAPI";
 import { checkJobStatus } from "../api/jobStatusAPI";
 import { STEP_FILES_BUCKET_KEY } from "../model/constants/index.constants";
+import { useLocation } from "react-router-dom";
 
 export type FileHandlingResponse = {
   urn: string | undefined;
@@ -20,11 +21,18 @@ export type FileHandlingResponse = {
 const useFileHandling = (token: string | null): FileHandlingResponse => {
   const [urn, setUrn] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { state } = useLocation();
+  const { file } = state;
+
+  useEffect(() => {
+    if (file) {
+      handleFileChange(file);
+    }
+  }, [file, token]);
 
   // Handles file selection via input element
-  const handleFileChange = (event: any) => {
-    const file = event.target.files[0];
-
+  const handleFileChange = (eventOrFile: any) => {
+    const file = eventOrFile.target ? eventOrFile.target.files[0] : eventOrFile;
     if (!file) {
       console.error("No file selected.");
       return;
@@ -36,9 +44,14 @@ const useFileHandling = (token: string | null): FileHandlingResponse => {
         async (fileCheckResp) => {
           console.log("fileCheckResp: ", fileCheckResp);
 
-          if (fileCheckResp) {
+          if (fileCheckResp?.objectId) {
             // If file exists, create a URN
             setUrn(createUrn(STEP_FILES_BUCKET_KEY, file.name));
+            console.log("urn: ", urn);
+            console.log(
+              "createURN: ",
+              createUrn(STEP_FILES_BUCKET_KEY, file.name)
+            );
           } else {
             // If file doesn't exist, upload it
             console.log("uploading file to bucket ... ");

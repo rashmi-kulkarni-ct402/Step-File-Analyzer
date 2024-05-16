@@ -102,6 +102,7 @@ const HomePage: React.FC = () => {
               textAlign: "center",
               color: "white",
               fontStyle: "italic",
+              fontSize: 20,
             }}
           >
             Drag and drop STEP file here...
